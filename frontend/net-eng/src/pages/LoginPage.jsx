@@ -79,10 +79,10 @@ export default function Login() {
                     type="phone"
                     name="phone"
                     placeholder="شماره تلفن"
-                    value={values.email}
+                    value={values.phone}
                     onChange={handleChange}
                 />
-                {errors.email && <p className={styles.error}>{errors.email}</p>}
+                {errors.phone && <p className={styles.error}>{errors.email}</p>}
 
                 <input
                     type="password"
