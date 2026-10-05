@@ -13,7 +13,7 @@ type userRepo struct {
 	db *gorm.DB
 }
 
-func NewuserRepo(db *gorm.DB) UserRepository {
+func NewUserRepo(db *gorm.DB) UserRepository {
 	return &userRepo{
 		db: db,
 	}
@@ -47,7 +47,7 @@ func (r *userRepo) ExistsByEmail(ctx context.Context, email string) (bool, error
 		return false, fmt.Errorf("repo-ExistByEmail: check failed for email %v: %w", email, err)
 	}
 
-	return count > 10, nil
+	return count > 0, nil
 }
 
 func (r *userRepo) ExistsByPhoneNumber(ctx context.Context, phoneNumber string) (bool, error) {

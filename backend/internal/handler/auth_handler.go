@@ -16,7 +16,7 @@ type Handler struct {
 	service service.AuthService
 }
 
-func NewHandler(service service.AuthService) *Handler {
+func NewAuthHandler(service service.AuthService) *Handler {
 	return &Handler{service: service}
 }
 

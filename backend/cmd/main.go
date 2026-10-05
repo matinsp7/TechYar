@@ -17,16 +17,16 @@ func main() {
 		log.Fatal("Failed to load config:", err)
 	}
 
-	postgressdb := db.NewPostgresDB(cfg.Postgres)
+	postgresDB := db.NewPostgresDB(cfg.Postgres)
 
-	userRepo := repository.NewuserRepo(postgressdb)
-	producRepo := repository.NewProductRepository(postgressdb)
+	userRepo := repository.NewUserRepo(postgresDB)
+	productRepo := repository.NewProductRepository(postgresDB)
 
 	authService := service.NewAuthService(userRepo)
-	productService := service.NewProductService(producRepo)
+	productService := service.NewProductService(productRepo)
 	userService := service.NewUserService(userRepo)
 
-	authHandler := handler.NewHandler(authService)
+	authHandler := handler.NewAuthHandler(authService)
 	productHandler := handler.NewProductHandler(productService)
 	userHandler := handler.NewUserHandler(userService)
 
