@@ -7,7 +7,7 @@ import (
 	"github.com/romina-kh/NetEng-Project/backend/internal/middleware"
 )
 
-func SetupRouter(uh *handler.Handler, ph *handler.ProductHandler, us *handler.UserHandler) *gin.Engine {
+func SetupRouter(uh *handler.Handler, us *handler.UserHandler, ph *handler.ProductHandler) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{

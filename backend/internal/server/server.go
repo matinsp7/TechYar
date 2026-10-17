@@ -1,17 +1,24 @@
 package server
 
 import (
-	"log"
+	"net/http"
+	"time"
 
 	"github.com/romina-kh/NetEng-Project/backend/internal/handler"
 	"github.com/romina-kh/NetEng-Project/backend/internal/router"
 )
 
-func StartServer(authHandler *handler.Handler, productHandler *handler.ProductHandler, userHandler *handler.UserHandler) {
-	r := router.SetupRouter(authHandler, productHandler, userHandler)
+func NewHttpServer(
+	address string,
+	authHandler *handler.Handler,
+	userHandler *handler.UserHandler,
+	productHandler *handler.ProductHandler,
+) *http.Server {
+	r := router.SetupRouter(authHandler, userHandler, productHandler)
 
-	log.Println("Server started on :8080")
-	if err := r.Run(":8080"); err != nil {
-		log.Fatal(err)
+	return &http.Server{
+		Addr:        address,
+		Handler:     r,
+		ReadTimeout: 5 * time.Second,
 	}
 }
