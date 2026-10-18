@@ -44,7 +44,7 @@ func run() error {
 
 	defer func() {
 		if err := sqlDB.Close(); err != nil {
-			log.Printf("close postgres database: %w", err)
+			log.Printf("close postgres database: %v", err)
 		}
 	}()
 

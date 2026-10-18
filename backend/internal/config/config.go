@@ -19,10 +19,10 @@ func LoadConfig() (*Config, error) {
 		},
 		Postgres: &db.PostGresConfig{
 			Host:     GetEnv("DB_HOST", "localhost"),
+			Port:     GetEnv("DB_PORT", "5432"),
 			User:     GetEnv("DB_USER", "postgres"),
 			Password: GetEnv("DB_PASSWORD", "netengpass"),
 			DBName:   GetEnv("DB_NAME", "techyar"),
-			Port:     GetEnv("DB_PORT", "5432"),
 		},
 	}
 
