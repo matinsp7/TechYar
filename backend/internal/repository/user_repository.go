@@ -1,0 +1,112 @@
+package repository
+
+import (
+	"context"
+	"errors"
+	"fmt"
+
+	"github.com/romina-kh/NetEng-Project/backend/internal/model"
+	"gorm.io/gorm"
+)
+
+type userRepo struct {
+	db *gorm.DB
+}
+
+func NewUserRepo(db *gorm.DB) UserRepository {
+	return &userRepo{
+		db: db,
+	}
+}
+
+func (r *userRepo) CreateUser(ctx context.Context, user *model.User) (int, error) {
+
+	err := r.db.WithContext(ctx).Create(&user).Error
+	if err != nil {
+		if errors.Is(err, gorm.ErrDuplicatedKey) {
+			return 0, fmt.Errorf("repo-CreateUser: user %v already exists: %w", user.Name, model.ErrUserAlreadyExists)
+		}
+
+		return 0, fmt.Errorf("repo-CreateUser: failed to create user %v: %w", user.Name, err)
+	}
+
+	return user.ID, nil
+
+}
+
+func (r *userRepo) ExistsByEmail(ctx context.Context, email string) (bool, error) {
+
+	var count int64
+
+	err := r.db.WithContext(ctx).
+		Model(&model.User{}).
+		Where("email = ?", email).
+		Count(&count).Error
+
+	if err != nil {
+		return false, fmt.Errorf("repo-ExistByEmail: check failed for email %v: %w", email, err)
+	}
+
+	return count > 0, nil
+}
+
+func (r *userRepo) ExistsByPhoneNumber(ctx context.Context, phoneNumber string) (bool, error) {
+	var count int64
+
+	err := r.db.WithContext(ctx).
+		Model(&model.User{}).
+		Where("phone_number = ?", phoneNumber).
+		Count(&count).Error
+
+	if err != nil {
+		return false, fmt.Errorf("repo-ExistByPhone: check failed for phone %v: %w", phoneNumber, err)
+	}
+
+	return count > 0, nil
+}
+
+func (r *userRepo) GetByEmailOrPhone(ctx context.Context, identifier string) (*model.User, error) {
+	var user model.User
+
+	err := r.db.WithContext(ctx).
+		Where("email = ? OR phone_number = ?", identifier, identifier).
+		First(&user).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("repo-GetByEmailOrPhone: user with %v: %w ", identifier, model.ErrUserNotFound)
+		}
+
+		return nil, fmt.Errorf("repo-GetByEmailOrPhone: failed to execute query for user with %v: %w ", identifier, err)
+	}
+
+	return &user, nil
+}
+
+func (r *userRepo) GetByUserID(ctx context.Context, userID int) (*model.User, error) {
+	var user model.User
+
+	err := r.db.WithContext(ctx).Where("user_id = ?", userID).First(&user).Error
+
+	if err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, fmt.Errorf("repo-GetByID: user with %v: %w", userID, model.ErrUserNotFound)
+		}
+		return nil, fmt.Errorf("repo-GetByID: failed to execute query for user with %v: %w", userID, err)
+	}
+
+	return &user, nil
+}
+
+func (r *userRepo) UpdateUserProfile(ctx context.Context, updateUser *model.User, userID int) error {
+	result := r.db.WithContext(ctx).Where("user_id = ?", userID).Updates(updateUser)
+	if result.Error != nil {
+		return fmt.Errorf("repo-UpdateUserProfile: failed to execute query for user with %v: %w", userID, result.Error)
+	}
+
+	if result.RowsAffected == 0 {
+		return fmt.Errorf("repo-UpdateUserProfile: user with %v: %w", userID, model.ErrUserNotFound)
+	}
+
+	return nil
+}
