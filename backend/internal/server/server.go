@@ -6,6 +6,7 @@ import (
 
 	"github.com/romina-kh/NetEng-Project/backend/internal/handler"
 	"github.com/romina-kh/NetEng-Project/backend/internal/router"
+	utility "github.com/romina-kh/NetEng-Project/backend/internal/utils"
 )
 
 func NewHttpServer(
@@ -13,8 +14,13 @@ func NewHttpServer(
 	authHandler *handler.Handler,
 	userHandler *handler.UserHandler,
 	productHandler *handler.ProductHandler,
+	jwtManager *utility.JWTManager,
 ) *http.Server {
-	r := router.SetupRouter(authHandler, userHandler, productHandler)
+	r := router.SetupRouter(authHandler,
+		userHandler,
+		productHandler,
+		jwtManager,
+	)
 
 	return &http.Server{
 		Addr:        address,

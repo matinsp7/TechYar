@@ -17,6 +17,7 @@ import (
 	"github.com/romina-kh/NetEng-Project/backend/internal/repository"
 	"github.com/romina-kh/NetEng-Project/backend/internal/server"
 	"github.com/romina-kh/NetEng-Project/backend/internal/service"
+	utility "github.com/romina-kh/NetEng-Project/backend/internal/utils"
 )
 
 func main() {
@@ -30,6 +31,11 @@ func run() error {
 	cfg, err := config.LoadConfig()
 	if err != nil {
 		return fmt.Errorf("load congif: %w", err)
+	}
+
+	jwtManager, err := utility.NewJWTManager(cfg.JWT.Secret)
+	if err != nil {
+		return fmt.Errorf("initialize JWT manager: %w", err)
 	}
 
 	postgresDB, err := db.NewPostgresDB(cfg.Postgres)
@@ -55,7 +61,7 @@ func run() error {
 	userService := service.NewUserService(userRepo)
 	productService := service.NewProductService(productRepo)
 
-	authHandler := handler.NewAuthHandler(authService)
+	authHandler := handler.NewAuthHandler(jwtManager, authService)
 	userHandler := handler.NewUserHandler(userService)
 	productHandler := handler.NewProductHandler(productService)
 
@@ -64,6 +70,7 @@ func run() error {
 		authHandler,
 		userHandler,
 		productHandler,
+		jwtManager,
 	)
 
 	ctx, stop := signal.NotifyContext(

@@ -2,10 +2,13 @@ package utility
 
 import (
 	"errors"
+	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
 )
+
+const tokenTTL = 24 * time.Hour
 
 type Claims struct {
 	UserID     int    `json:"user_id"`
@@ -15,39 +18,68 @@ type Claims struct {
 	jwt.RegisteredClaims
 }
 
-var jwtSecret = []byte("SUPER_SECRET_KEY")
+type JWTManager struct {
+	secret []byte
+}
 
-func GenerateJwtToken(userID int, phone, Name, Family string) (string, error) {
+func NewJWTManager(secret string) (*JWTManager, error) {
+	if len(secret) < 32 {
+		return nil, errors.New("JWT secret must be at least 32 bytes")
+	}
+
+	return &JWTManager{
+		secret: []byte(secret),
+	}, nil
+}
+
+func (m *JWTManager) GenerateToken(
+	userID int,
+	phone, Name, Family string,
+) (string, error) {
+
+	now := time.Now()
+
 	claims := Claims{
 		UserID:     userID,
 		Phone:      phone,
 		Name:       Name,
 		FamilyName: Family,
 		RegisteredClaims: jwt.RegisteredClaims{
-			ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
-			IssuedAt:  jwt.NewNumericDate(time.Now()),
+			ExpiresAt: jwt.NewNumericDate(now.Add(tokenTTL)),
+			IssuedAt:  jwt.NewNumericDate(now),
 		},
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	return token.SignedString(jwtSecret)
+	signedToken, err := token.SignedString(m.secret)
+	if err != nil {
+		return "", fmt.Errorf("sign JWT: %w", err)
+	}
+
+	return signedToken, nil
 }
 
-func ParseJwtToken(tokenStr string) (*Claims, error) {
+func (m *JWTManager) ParseToken(tokenStr string) (*Claims, error) {
 	token, err := jwt.ParseWithClaims(
 		tokenStr,
 		&Claims{},
 		func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, errors.New("unexpected signing method")
+			if token.Method.Alg() != jwt.SigningMethodHS256.Alg() {
+				return nil, fmt.Errorf(
+					"unexpected signing method: %v",
+					token.Header["alg"],
+				)
 			}
-			return jwtSecret, nil
+			return m.secret, nil
 		},
+		jwt.WithValidMethods([]string{
+			jwt.SigningMethodHS256.Alg(),
+		}),
 	)
 
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("parse JWT: %w", err)
 	}
 
 	claims, ok := token.Claims.(*Claims)

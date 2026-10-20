@@ -13,11 +13,18 @@ import (
 )
 
 type Handler struct {
-	service service.AuthService
+	jwtManager *utility.JWTManager
+	service    service.AuthService
 }
 
-func NewAuthHandler(service service.AuthService) *Handler {
-	return &Handler{service: service}
+func NewAuthHandler(
+	jwtManager *utility.JWTManager,
+	service service.AuthService,
+) *Handler {
+	return &Handler{
+		jwtManager: jwtManager,
+		service:    service,
+	}
 }
 
 func (h *Handler) Signup(c *gin.Context) {
@@ -60,7 +67,12 @@ func (h *Handler) Signup(c *gin.Context) {
 		return
 	}
 
-	token, err := utility.GenerateJwtToken(userID, user.PhoneNumber, user.Name, user.Family)
+	token, err := h.jwtManager.GenerateToken(
+		userID,
+		user.PhoneNumber,
+		user.Name,
+		user.Family,
+	)
 	if err != nil {
 		log.Printf("token generation failed: %v", err)
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
@@ -92,7 +104,12 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	token, err := utility.GenerateJwtToken(user.ID, user.PhoneNumber, user.Name, user.Family)
+	token, err := h.jwtManager.GenerateToken(
+		user.ID,
+		user.PhoneNumber,
+		user.Name,
+		user.Family,
+	)
 	if err != nil {
 		log.Printf("token generation failed: %v", err)
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{

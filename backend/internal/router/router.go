@@ -5,9 +5,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/romina-kh/NetEng-Project/backend/internal/handler"
 	"github.com/romina-kh/NetEng-Project/backend/internal/middleware"
+	utility "github.com/romina-kh/NetEng-Project/backend/internal/utils"
 )
 
-func SetupRouter(uh *handler.Handler, us *handler.UserHandler, ph *handler.ProductHandler) *gin.Engine {
+func SetupRouter(
+	uh *handler.Handler,
+	us *handler.UserHandler,
+	ph *handler.ProductHandler,
+	jwtManager *utility.JWTManager,
+) *gin.Engine {
 	r := gin.Default()
 
 	r.Use(cors.New(cors.Config{
@@ -24,7 +30,7 @@ func SetupRouter(uh *handler.Handler, us *handler.UserHandler, ph *handler.Produ
 	auth.POST("/login", uh.Login)
 
 	user := api.Group("/user")
-	user.Use(middleware.JWTAuth())
+	user.Use(middleware.JWTAuth(jwtManager))
 	user.GET("/me", us.ME)
 	user.PUT("/edit", us.EditProfile)
 
